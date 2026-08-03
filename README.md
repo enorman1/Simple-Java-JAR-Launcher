@@ -12,6 +12,9 @@ java -jar application.jar
 
 The launcher automatically reconstructs the name of the associated `.jar` file and passes the command-line arguments to Java.
 
+New update [3 Aug 2026] :
+* add a error message if `Java` is not found in the system (in the PATH). This message is done with a native dialog box of your OS.
+
 [French]
 
 Petit lanceur multiplateforme écrit en langage C permettant d'exécuter automatiquement un fichier JAR (Java archive file) portant le même nom que l'exécutable du lanceur.
@@ -23,6 +26,10 @@ java -jar application.jar
 ```
 
 Le lanceur reconstruit automatiquement le nom du fichier `.jar` associé et transmet les arguments de la ligne de commande à Java.
+
+Mise à jour [3 août 2026] :
+
+* Ajout d'un message d'erreur si `Java` est introuvable sur le système (dans le PATH). Ce message s'affiche via une boîte de dialogue native de votre système d'exploitation.
 
 ## Fonctionnalités
 
@@ -141,8 +148,10 @@ __Compilation Windows__
 Avec MinGW :
 
 ```bash
-gcc main.c -o jar_launcher.exe
+gcc main.c -o jar_launcher.exe -luser32 -lgdi32
 ```
+
+* Les bibliothèques `user32` et `gdi32` sont nécessaires pour `MessageBox`.
 
 Exemple :
 

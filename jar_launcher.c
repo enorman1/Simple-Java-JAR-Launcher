@@ -17,10 +17,10 @@ char *build_jar_name(const char *program_name)
 {
 	char* jar_file;
 	static const char *suffix = ".jar";
-	
+
 	// recontruction du nom du fichier ".jar"
 	jar_file = malloc((strlen(program_name) + strlen(suffix) + 1)*sizeof(char)); //len(argv[0]) + '\0'
-	
+
 	if (jar_file != NULL) {
 		jar_file[0] = '\0';
 #if __linux__
@@ -51,6 +51,23 @@ char *build_jar_name(const char *program_name)
 	return jar_file;
 }
 
+void show_error_dialog(const char *message) {
+    #ifdef _WIN32
+        MessageBox(NULL, message, "Erreur", MB_ICONERROR | MB_OK);
+    #else
+        if (system("which zenity > /dev/null 2>&1") == 0) {
+            char command[256];
+            snprintf(command, sizeof(command), "zenity --error --text='%s' --title='Erreur'", message);
+            system(command);
+        } else if (system("which kdialog > /dev/null 2>&1") == 0) {
+            char command[256];
+            snprintf(command, sizeof(command), "kdialog --error '%s' --title 'Erreur'", message);
+            system(command);
+        } else {
+            fprintf(stderr, "Erreur : %s\n", message);
+        }
+    #endif
+}
 
 #if _WIN32
 	int jl_exec_windows(char* cmd_string) {
@@ -83,28 +100,45 @@ int main(int argc, char *argv[]) {
 	// parent path
 	char* jar_file;
 	static const char *jar_option = "-jar";
+	int return_code;
 
-	if (argc == 0) return EXIT_FAILURE;
+#ifdef _WIN32
+    // Windows : Redirect stderr to null
+    return_code = system("java -version 2> nul");
+#else
+    // Linux/macOS : Redirect stderr to /dev/null
+    return_code = system("java -version 2> /dev/null");
+#endif
+
+	if (return_code != 0) {
+        show_error_dialog("Java is not installed correctly or cannot be found!");
+        return EXIT_FAILURE;
+	}
+
+	if (argc == 0) {
+        show_error_dialog("An error has occurred. The application cannot be launched!");
+        return EXIT_FAILURE;
+	}
 
 #if __linux__
 	const char *java_cmd = "java";
 	pid_t pid = fork();
-	
+
 	if (pid < 0) {
 		perror("fork");
 		return EXIT_FAILURE;
 	}
-	
+
 	if (pid == 0) {
 		// processus fils
 		jar_file = build_jar_name(argv[0]);
-		
+
 		if (jar_file != NULL) {
 			//printf("jar_file : %s\n", jar_file);
 			// liste des arguments pour la function "execvp"
 			//char **args = malloc((argc + 3) * sizeof(*args));
 			char **args = malloc((argc + 3) * sizeof(char *));
-			
+
 			if (args != NULL) {
 				args[0] = (char *) java_cmd;   // "java"
 				args[1] = (char *) jar_option; // "-jar"
@@ -148,14 +182,14 @@ int main(int argc, char *argv[]) {
 #elif _WIN32
 	const char *java_cmd = "java.exe";
 	char* java_path;
-	
+
 	size_t length_str = 0;
 
 	jar_file = build_jar_name(argv[0]);
-	
+
 	if (jar_file != NULL) {
 		//printf("Launching : java.exe -jar '%s.jar'\n", jar_file);
-		
+
 		// allocation de la mémoire pour la chaîne destination
 		length_str = strlen(java_cmd) + 1;   // to store the string "java.exe" + one space
 		length_str += strlen(jar_option) + 1; // to store the string "-jar" + one space
@@ -170,13 +204,13 @@ int main(int argc, char *argv[]) {
 			}
 		}
 		length_str += 1; // to store '\0' (end of string)
-		
+
 		//printf("%s [%d]\n", java_cmd, strlen(java_cmd));
 		//printf("%s [%d]\n", jar_option, strlen(jar_option));
 		//printf("%s [%d]\n", jar_file, strlen(jar_file));
 		//for (int i = 1; i < argc; i++)
 		//	printf("%s [%d]\n", argv[i], strlen(argv[i]));
-		
+
 		java_path = malloc(length_str*sizeof(char));
 		if (java_path != NULL) {
 			// prepare the command string
@@ -210,10 +244,10 @@ int main(int argc, char *argv[]) {
 			}
 			// execute the command line into the system
 			int retVal = jl_exec_windows(java_path);
-			
+
 			//printf("Launching : '%s'\n", java_path);
 			//int retVal = 0;
-			
+
 			free (java_path);
 			free (jar_file);
 			return retVal;
@@ -222,7 +256,7 @@ int main(int argc, char *argv[]) {
 			free (jar_file);
 			return EXIT_FAILURE;
 		}
-		
+
 	}
 	// free memory
 	free (jar_file);
