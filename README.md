@@ -12,7 +12,7 @@ java -jar application.jar
 
 The launcher automatically reconstructs the name of the associated `.jar` file and passes the command-line arguments to Java.
 
-New update [3 Aug 2026] :
+__New update [3 Aug 2026]__ :
 * add a error message if `Java` is not found in the system (in the PATH). This message is done with a native dialog box of your OS.
 
 [French]
@@ -27,7 +27,7 @@ java -jar application.jar
 
 Le lanceur reconstruit automatiquement le nom du fichier `.jar` associé et transmet les arguments de la ligne de commande à Java.
 
-Mise à jour [3 août 2026] :
+__Mise à jour [3 août 2026]__ :
 
 * Ajout d'un message d'erreur si `Java` est introuvable sur le système (dans le PATH). Ce message s'affiche via une boîte de dialogue native de votre système d'exploitation.
 
